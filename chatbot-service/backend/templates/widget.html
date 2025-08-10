@@ -1,0 +1,179 @@
+<!-- chatbot-service/backend/templates/widget.html -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chatbot Widget</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col">
+    <div class="bg-blue-600 text-white p-4 rounded-t-2xl text-lg font-semibold">
+      🤖 Gemini Chatbot
+    </div>
+    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-2 h-96">
+
+    </div>
+    <div class="flex border-t p-3 gap-2">
+      <input id="user-input" type="text" placeholder="Type your message..."
+        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" />
+      <button onclick="sendMessage()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+        Send
+      </button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='widget.js') }}"></script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat Widget</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='widget.css') }}">
+</head>
+<body>
+  <div class="chat-root" role="application" aria-label="Chat widget">
+    <div class="chat-card" id="chat-card">
+      <!-- Header -->
+      <div class="chat-header" aria-hidden="false">
+        <div class="logo" aria-hidden="true">🤖</div>
+        <div>
+          <div class="title">Assistant</div>
+          <div class="subtitle">We reply powered by Gemini</div>
+        </div>
+
+        <div class="controls" style="margin-left:auto;">
+          <button class="icon-btn" id="minimize-btn" title="Minimize">_</button>
+          <button class="icon-btn" id="close-btn" title="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-body" id="chat-body" role="log" aria-live="polite">
+        <!-- Empty state -->
+        <div class="empty-state" id="empty">Say hi 👋 — I'm ready to help!</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="chat-footer" role="region" aria-label="Message input">
+        <div class="input">
+          <input id="input-field" type="text" placeholder="Ask me something..." aria-label="Type a message">
+        </div>
+        <button id="send-btn" class="btn-send" aria-label="Send message">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Config ----
+    // If your backend endpoint is different, change CHAT_ENDPOINT below.
+    const CHAT_ENDPOINT = "/chatbot"; // expects POST { message } and returns { response: "..." }
+
+    // ---- Helpers ----
+    function el(id){ return document.getElementById(id); }
+    function createMsg(text, who){
+      const d = document.createElement('div');
+      d.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+      d.innerHTML = `<div>${text}</div>`;
+      return d;
+    }
+    function showEmpty(state){
+      const empty = el('empty');
+      if(!state) empty.style.display = 'none'; else empty.style.display = 'block';
+    }
+
+    // ---- Typing indicator element (returns node) ----
+    function typingNode(){
+      const wrap = document.createElement('div');
+      wrap.className = 'typing';
+      const dot1 = document.createElement('span'); dot1.className='dot';
+      const dot2 = document.createElement('span'); dot2.className='dot';
+      const dot3 = document.createElement('span'); dot3.className='dot';
+      wrap.appendChild(dot1); wrap.appendChild(dot2); wrap.appendChild(dot3);
+      return wrap;
+    }
+
+    // ---- Append message & auto scroll ----
+    function appendMessageNode(node){
+      const body = el('chat-body');
+      // remove empty state if present
+      showEmpty(false);
+      body.appendChild(node);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    // ---- Send user message and call backend ----
+    async function sendMessage(){
+      const input = el('input-field');
+      const text = input.value.trim();
+      if(!text) return;
+      input.value = '';
+      // show user bubble
+      appendMessageNode(createMsg(text, 'user'));
+
+      // show typing indicator
+      const t = typingNode();
+      t.id = '__typing';
+      appendMessageNode(t);
+
+      try {
+        const res = await fetch(CHAT_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const json = await res.json();
+        // remove typing
+        const typingEl = document.getElementById('__typing');
+        if(typingEl) typingEl.remove();
+
+        const reply = (json && (json.response || json.reply || json.message)) || 'Sorry, no response.';
+        appendMessageNode(createMsg(reply, 'bot'));
+      } catch (err) {
+        const typingEl = document.getElementById('__typing');
+        if(typingEl) typingEl.remove();
+        appendMessageNode(createMsg('⚠️ Connection error. Try again later.', 'bot'));
+        console.error('Chat error', err);
+      }
+    }
+
+    // ---- Keyboard binding ----
+    document.addEventListener('DOMContentLoaded', function(){
+      el('send-btn').addEventListener('click', sendMessage);
+      el('input-field').addEventListener('keydown', function(e){
+        if(e.key === 'Enter') sendMessage();
+      });
+
+      // Minimize/Close behavior
+      el('minimize-btn').addEventListener('click', function(){
+        const card = el('chat-card');
+        card.style.height = card.style.height === '48px' ? '' : '48px';
+        const body = el('chat-body');
+        const footer = document.querySelector('.chat-footer');
+        if(card.style.height === '48px'){
+          body.style.display = 'none';
+          footer.style.display = 'none';
+        } else {
+          body.style.display = '';
+          footer.style.display = '';
+        }
+      });
+
+      el('close-btn').addEventListener('click', function(){
+        // if embedded in iframe, we can postMessage to parent to close. Otherwise hide
+        if(window.parent && window.parent !== window){
+          window.parent.postMessage({ type:'widget-close' }, '*');
+        } else {
+          document.body.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
