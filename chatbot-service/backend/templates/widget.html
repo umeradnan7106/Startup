@@ -1,34 +1,117 @@
-<!-- chatbot-service/backend/templates/widget.html -->
+<!-- backend/templates/widget.html -->
+
 <!-- <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chatbot Widget</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat Widget</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='widget.css') }}">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col">
-    <div class="bg-blue-600 text-white p-4 rounded-t-2xl text-lg font-semibold">
-      🤖 Gemini Chatbot
-    </div>
-    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-2 h-96">
+<body>
+  <div class="chat-root" role="application" aria-label="Chat widget">
+    <div class="chat-card" id="chat-card">
+      <div class="chat-header">
+        <div class="logo">🤖</div>
+        <div>
+          <div class="title">Assistant</div>
+          <div class="subtitle">Powered by Gemini</div>
+        </div>
+        <div class="controls" style="margin-left:auto;">
+          <button class="icon-btn" id="minimize-btn" title="Minimize">_</button>
+          <button class="icon-btn" id="close-btn" title="Close">✕</button>
+        </div>
+      </div>
 
-    </div>
-    <div class="flex border-t p-3 gap-2">
-      <input id="user-input" type="text" placeholder="Type your message..."
-        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300" />
-      <button onclick="sendMessage()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-        Send
-      </button>
+      <div class="chat-body" id="chat-body" role="log" aria-live="polite">
+        <div class="empty-state" id="empty">Say hi 👋 — I'm ready to help!</div>
+      </div>
+
+      <div class="chat-footer">
+        <div class="input">
+          <input id="input-field" type="text" placeholder="Ask me something..." aria-label="Type a message">
+        </div>
+        <button id="send-btn" class="btn-send" aria-label="Send message">Send</button>
+      </div>
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='widget.js') }}"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const BOT_ID = params.get("bot_id"); // must be provided from embed script
+    const CHAT_ENDPOINT = "/chatbot";
+
+    function el(id){ return document.getElementById(id); }
+    function createMsg(text, who){
+      const d = document.createElement('div');
+      d.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+      d.innerHTML = `<div>${text}</div>`;
+      return d;
+    }
+    function showEmpty(state){
+      el('empty').style.display = state ? 'block' : 'none';
+    }
+    function typingNode(){
+      const wrap = document.createElement('div');
+      wrap.className = 'typing';
+      wrap.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+      return wrap;
+    }
+    function appendMessageNode(node){
+      const body = el('chat-body');
+      showEmpty(false);
+      body.appendChild(node);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    async function sendMessage(){
+      const input = el('input-field');
+      const text = (input.value || '').trim();
+      if(!text) return;
+      if(!BOT_ID){ alert('Missing bot_id'); return; }
+
+      input.value = '';
+      appendMessageNode(createMsg(text, 'user'));
+      const t = typingNode(); t.id='__typing'; appendMessageNode(t);
+
+      try {
+        const res = await fetch(CHAT_ENDPOINT, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message: text, bot_id: BOT_ID })
+        });
+        const json = await res.json();
+        document.getElementById('__typing')?.remove();
+        appendMessageNode(createMsg(json.response || 'No response', 'bot'));
+      } catch (e) {
+        document.getElementById('__typing')?.remove();
+        appendMessageNode(createMsg('⚠️ Connection error.', 'bot'));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      el('send-btn').addEventListener('click', sendMessage);
+      el('input-field').addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+      el('minimize-btn').addEventListener('click', function(){
+        const card = el('chat-card');
+        card.classList.toggle('min');
+      });
+
+      el('close-btn').addEventListener('click', function(){
+        if(window.parent && window.parent !== window){
+          window.parent.postMessage({ type:'widget-close' }, '*');
+        } else {
+          document.body.style.display = 'none';
+        }
+      });
+    });
+  </script>
 </body>
 </html> -->
 
+
+<!-- backend/templates/widget.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

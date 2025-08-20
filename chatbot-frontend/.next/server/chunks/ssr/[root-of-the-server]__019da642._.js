@@ -11,26 +11,44 @@ module.exports = mod;
 "[project]/src/components/ChatbotWidget.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
+// // src/components/ChatbotWidget.tsx
+// "use client";
+// import { useEffect } from "react";
+// const ChatbotWidget = () => {
+//   useEffect(() => {
+//     const script = document.createElement("script");
+//     script.src = "https://chatbot-backend-production-f970.up.railway.app/static/widget.js"; // 👈 API service ka URL
+//     script.async = true;
+//     script.setAttribute("data-bot-id", "ec97e16b-1826-41a3-b242-675913dbc5e0");
+//     document.body.appendChild(script);
+//     return () => {
+//       document.body.removeChild(script);
+//     };
+//   }, []);
+//   return null; // Widget khud hi DOM me inject hoga
+// };
+// export default ChatbotWidget;
+// src/components/ChatbotWidget.tsx
 __turbopack_context__.s({
-    "default": ()=>__TURBOPACK__default__export__
+    "default": ()=>ChatbotWidget
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 "use client";
 ;
-const ChatbotWidget = ()=>{
+function ChatbotWidget() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const script = document.createElement("script");
-        script.src = "http://localhost:8000/static/widget.js"; // 👈 API service ka URL
+        script.src = "https://chatbot-backend-production-f970.up.railway.app/static/widget.js";
         script.async = true;
-        script.setAttribute("data-bot-id", "ec97e16b-1826-41a3-b242-675913dbc5e0");
+        script.setAttribute("data-widget", "https://chatbot-backend-production-f970.up.railway.app/widget");
+        script.setAttribute("data-bot-id", "<BOT_ID_FROM_DB>");
         document.body.appendChild(script);
         return ()=>{
             document.body.removeChild(script);
         };
     }, []);
-    return null; // Widget khud hi DOM me inject hoga
-};
-const __TURBOPACK__default__export__ = ChatbotWidget;
+    return null;
+}
 }),
 "[project]/node_modules/next/dist/server/route-modules/app-page/module.compiled.js [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";

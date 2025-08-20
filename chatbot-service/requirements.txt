@@ -1,0 +1,9 @@
+Flask
+Flask-JWT-Extended
+Flask-SQLAlchemy
+python-dotenv
+psycopg2-binary
+requests
+gunicorn
+Flask-Bcrypt
+Werkzeug
