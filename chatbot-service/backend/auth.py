@@ -41,7 +41,7 @@ def signup():
     # JWT token generate
     token = jwt.encode(
         {
-            "user_id": new_user.id,
+            "sub": str(new_user.id),
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
         },
         Config.JWT_SECRET_KEY,
@@ -73,13 +73,13 @@ def login():
 
     user = User.query.filter_by(email=email).first()
 
-    if not user or not check_password_hash(user.password_hash, password):
+    if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid credentials"}), 401
 
     # JWT token generate
     token = jwt.encode(
         {
-            "user_id": user.id,
+            "sub": str(user.id),
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
         },
         Config.JWT_SECRET_KEY,

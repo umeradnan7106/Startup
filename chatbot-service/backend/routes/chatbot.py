@@ -1,20 +1,20 @@
 # 📂 File: backend/routes/chatbot.py
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
-router = APIRouter()
+from flask import Blueprint, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from backend.models import Chatbot
 
-class Message(BaseModel):
-    message: str
+chatbot_bp = Blueprint("chatbot", __name__)
 
-@router.post("/chatbot")
-async def chatbot_endpoint(payload: Message):
-    user_message = payload.message
-    print("User message:", user_message)
-
-    # Dummy bot response
-    bot_response = f"You said: {user_message}"
-
-    return JSONResponse(content={"response": bot_response})
+@chatbot_bp.route("/my-bots", methods=["GET"])
+@jwt_required()
+def get_user_bots():
+    uid = get_jwt_identity()
+    bots = Chatbot.query.filter_by(user_id=uid).all()
+    return jsonify([{
+        "id": b.id,
+        "name": b.name,
+        "model": b.model,
+        "welcome_message": b.welcome_message
+    } for b in bots])
